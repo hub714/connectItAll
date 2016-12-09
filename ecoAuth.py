@@ -1,4 +1,5 @@
 import requests 
+import time
 import boto3
 import json
 import pprint
@@ -16,21 +17,6 @@ def get_api_key():
     )
     item = response['Item']['Value']
     return item
-
-def refresh_token(apiKey):
-    "Function to refresh the token given an api Key"
-    response = table.get_item(
-        Key={
-            'Name': 'refreshToken'
-        }
-    )
-    refreshToken = response['Item']['Value']
-    url = 'https://api.ecobee.com/token'
-    query_string = 'grant_type=refresh_token&code='+refreshToken+'&client_id='+apiKey
-    response = requests.get(url+query_string)
-    data = response.json()
-    print data
-    return data
 
 def initial_auth(apiKey):
     url = 'https://api.ecobee.com/authorize'
@@ -54,7 +40,8 @@ def initial_auth(apiKey):
         }
     )
 
-def get_access(apiKey):
+def get_access_token(apiKey):
+    currentTime = int(time.time())
     response = table.get_item(
         Key={
             'Name': 'authorizationCode'
@@ -78,7 +65,8 @@ def get_access(apiKey):
     response = table.put_item(
         Item = {
             'Name': 'accessToken',
-            'Value': str(data['access_token'])
+            'Value': str(data['access_token']),
+            'postedAt': str(currentTime)
         }
     )
     response = table.put_item(
@@ -87,8 +75,23 @@ def get_access(apiKey):
             'Value': str(data['refresh_token'])
         }
     )
+    return data['access_token']
 
-def refresh_access(apiKey):
+def get_current_token(apiKey):
+    response = table.get_item(
+        Key={
+            'Name': 'accessToken'
+        }
+    )
+    accessToken = response['Item']['Value']
+
+    currentTime = int(time.time())
+    #print (currentTime - response['Item']['postedAt'])
+    if ((currentTime - response['Item']['postedAt']) > 3300):
+        accessToken = refresh_access_token(apiKey)
+    return accessToken
+
+def refresh_access_token(apiKey):
     response = table.get_item(
         Key={
             'Name': 'refreshToken'
@@ -108,10 +111,12 @@ def refresh_access(apiKey):
     data = response.json()
     print 'Access Token: '+data['access_token']
     print 'Refresh Token: '+data['refresh_token']
+    currentTime = int(time.time())
     response = table.put_item(
         Item = {
             'Name': 'accessToken',
-            'Value': str(data['access_token'])
+            'Value': str(data['access_token']),
+            'postedAt': currentTime
         }
     )
     response = table.put_item(
@@ -120,6 +125,7 @@ def refresh_access(apiKey):
             'Value': str(data['refresh_token'])
         }
     )
+    return data['access_token']
 
 if __name__ == '__main__':
     dynamodb = boto3.resource('dynamodb')
@@ -127,8 +133,9 @@ if __name__ == '__main__':
 
     apiKey = get_api_key()
     #initial_auth(apiKey)
-    #get_access(apiKey)
-    refresh_access(apiKey)
+    #get_access_token(apiKey)
+    #refresh_access_token(apiKey)
+    print get_current_token(apiKey)
     #pprint.pprint(data)
 else:
     dynamodb = boto3.resource('dynamodb')
