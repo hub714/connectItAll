@@ -109,8 +109,9 @@ def refresh_access_token(apiKey):
 
     response = requests.post(url, data=payload)
     data = response.json()
-    print 'Access Token: '+data['access_token']
-    print 'Refresh Token: '+data['refresh_token']
+    #print 'Access Token: '+data['access_token']
+    #print 'Refresh Token: '+data['refresh_token']
+    
     currentTime = int(time.time())
     response = table.put_item(
         Item = {
