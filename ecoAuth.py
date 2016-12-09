@@ -141,5 +141,5 @@ if __name__ == '__main__':
 else:
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table('connectItAllSecrets')
-    print 'Outside __main__'
+    #print 'Outside __main__'
 

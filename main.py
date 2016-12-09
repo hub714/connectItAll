@@ -4,4 +4,5 @@ from boto3 import dynamodb
 
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table('connectItAllSecrets')
-print ecoAuth.get_api_key()
+apiKey = ecoAuth.get_api_key()
+print ecoAuth.get_current_token(apiKey)
