@@ -20,8 +20,6 @@ def customCallback(client, userdata, message):
     print(message.topic)
     print("--------------\n\n")
 
-apiKey = ecoAuth.get_api_key()
-print ecoAuth.get_current_token(apiKey)
 
 def initMqtt():
 
@@ -71,16 +69,6 @@ def initShadow():
     return myAWSIoTMQTTShadowClient
 
 def useShadow():
-    jsonPayload = """
-    {
-        "state": {
-            "desired":{
-                "property":<INT VALUE>
-            }
-        }
-    }
-    """
-    jsonPayload = '{"state": {"desired": {"property": 10}}}'
     #jsonPayload['state']['desired']['property'] = 10
     #json.dumps(jsonPayload)
     myAWSIoTMQTTShadowClient = initShadow()
@@ -89,14 +77,22 @@ def useShadow():
     # Create a deviceShadow with persistent subscription
     Bot = myAWSIoTMQTTShadowClient.createShadowHandlerWithName("Bot", True)
     Bot.shadowUpdate(jsonPayload, customShadowCallback_Delta, 5)
-    Bot.shadowRegisterDeltaCallback(customShadowCallback_Delta)
-    
+    #Bot.shadowRegisterDeltaCallback(customShadowCallback_Delta)
+    loops = 0
+    jsonPayload = {}
+    jsonPayload = '{"state": {"desired": {"property":"10"}}}'
+    print jsonPayload
     while True:
-        pass
+        Bot.shadowUpdate(jsonPayload, customShadowCallback_Delta, 5)
+        loops += 1
+        time.sleep(2)
 
 if __name__ == '__main__':
     #listenAndSend()
-    useShadow()
+    apiKey = ecoAuth.get_api_key()
+    currentToken = ecoAuth.get_current_token(apiKey)
+    print "Current Token: " + currentToken   
+    #useShadow()
 else:
     print "Not In Main"
 
