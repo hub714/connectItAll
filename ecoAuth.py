@@ -2,7 +2,7 @@ import requests
 import time
 import boto3
 import json
-import pprint
+from pprint import pprint
 from boto3 import dynamodb
 
 def get_api_key():
@@ -128,15 +128,27 @@ def refresh_access_token(apiKey):
     )
     return data['access_token']
 
+def get_settings(authKey):
+    url = 'https://api.ecobee.com/1/thermostat'
+    headers = {"Content-Type": "text/json", "Authorization": "Bearer "+authKey}
+    #headers = {"Content-Type": "text/json", "Authorization": "Bearer "+str(authKey)}
+    query_string = '?format=json&body={"selection":{"selectionType":"registered","selectionMatch":"","includeSettings":true}}'
+    #query_string = '?format=json&body=\{"selection":\{"selectionType":"registered","selectionMatch":"","includeSettings":true\}\}'
+    response = requests.get(url+query_string, headers=headers)
+    return response.json()
+
 if __name__ == '__main__':
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table('connectItAllSecrets')
 
     apiKey = get_api_key()
+    currentToken = get_current_token(apiKey)
+    pprint(get_settings(currentToken))
+
     #initial_auth(apiKey)
     #get_access_token(apiKey)
     #refresh_access_token(apiKey)
-    print get_current_token(apiKey)
+    #print get_current_token(apiKey)
     #pprint.pprint(data)
 else:
     dynamodb = boto3.resource('dynamodb')
